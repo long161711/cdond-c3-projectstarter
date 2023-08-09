@@ -43,8 +43,13 @@ jobs:
       - run:
           name: Build front-end
           command: |
-            # Your code here
-            exit 1
+            # change directory backend
+            cd frontend
+            # install dependencies in packege.json
+            npm install
+            # build
+            npm run build
+      # save results to cache
       - save_cache:
           paths: [frontend/node_modules]
           key: frontend-build
@@ -59,8 +64,9 @@ jobs:
       - run:
           name: Back-end build
           command: |
-             # Your code here
-             exit 1
+            cd backend
+            npm install
+            npm run build
       - save_cache:
           paths: [backend/node_modules]
           key: backend-build
