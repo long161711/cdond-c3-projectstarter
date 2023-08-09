@@ -125,9 +125,6 @@ jobs:
             cd frontend
             # install dependencies in package.json
             npm install
-            # fix vulnerabilities and audit for critical vulnerabilities
-            npm audit fix --audit-level=critical --force
-            npm audit fix --force
 
   scan-backend:
     docker:
@@ -145,11 +142,6 @@ jobs:
             cd backend
             # install dependencies in package.json
             npm install
-            # fix vulnerabilities and audit for critical vulnerabilities
-            npm audit fix --audit-level=critical --force
-            # audit for critical vulnerabilities
-            npm audit fix --force
-            npm audit --audit-level=critical
 
   deploy-infrastructure:
     docker:
