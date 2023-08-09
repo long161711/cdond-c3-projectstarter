@@ -202,43 +202,104 @@ jobs:
             exit 1
      # Here's where you will add some code to rollback on failure      
 
-  deploy-frontend:
+    deploy-frontend:
     docker:
       # Docker image here that supports AWS CLI
+      - image: python:3.7-alpine3.16
     steps:
       # Checkout code from git
+      - checkout
       - run:
           name: Install dependencies
           command: |
-            # your code here
+            # install dependencies by using apk package manager to install tar, gzip, nodejs, npm and aws cli
+            apk add --update --no-cache nodejs tar npm aws-cli gzip
       - run:
           name: Get backend url
           command: |
-            # your code here
+            # Export backend ip to environment variable to use in frontend .env file
+            export BACKEND_IP=$(aws ec2 describe-instances \
+              --query 'Reservations[*].Instances[*].PublicIpAddress' \
+              --filters Name=tag:aws:cloudformation:stack-name,Values=udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7} \
+              --output text)
+            # Export backend url to environment variable to use in frontend .env file
             export API_URL="http://${BACKEND_IP}:3030"
-            echo "${API_URL}"
+            # Add backend url to frontend .env file
+            echo "API_URL = ${API_URL}"
+            # Add backend url to frontend .env file
+            echo "API_URL=http://${BACKEND_IP}:3030" >> frontend/.env
+            # Cat .env file to check if it's correct
+            cat frontend/.env
       - run:
           name: Deploy frontend objects
           command: |
-            # your code here
-      # Here's where you will add some code to rollback on failure      
+            # Change directory to frontend folder
+            cd frontend
+            # Install dependencies
+            npm install
+            # Build frontend
+            npm run build
+            # Create tar.gz file with frontend build
+            tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist
+            # Upload frontend build to s3 bucket with workflow id as name
+            aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive          
+      # Here's where you will add some code to rollback on failure 
+      # Destroy infrastructure if job fails to prevent unnecessary costs
+      - destroy-environment:
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+      - revert-migrations:
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}  
                     
   deploy-backend:
     docker:
       # Docker image here that supports Ansible
+      - image: python:3.7-alpine3.16
     steps:
       # Checkout code from git
+      - checkout
       # Add ssh keys with fingerprint
-      # attach workspace
+      - add_ssh_keys:
+          fingerprints:
+            - '39:6b:4a:6a:44:95:78:ad:53:e4:9b:65:f5:d9:85:9d'
       - run:
           name: Install dependencies
           command: |
-            # your code here
+            # install dependencies by using apk package manager to install tar, gzip, nodejs, npm, aws cli and ansible
+            apk add --update --no-cache ansible tar gzip nodejs npm aws-cli 
+      - restore_cache:
+          keys: [backend-build]
+      - attach_workspace:
+          at: ~/
       - run:
           name: Deploy backend
           command: |
-            # your code here
+            # Change directory to backend folder
+            cd backend
+            # Install dependencies
+            npm install
+            # Build backend
+            npm run build
+            # Change directory to project folder
+            cd ..
+            # Create tar.gz file with backend build
+            tar -C backend -czvf artifact.tar.gz .
+            # Move artifact.tar.gz file to ansible folder
+            mkdir -p ~/project/.circleci/ansible/roles/deploy/files/
+            # Move artifact.tar.gz file to ansible folder
+            mv artifact.tar.gz .circleci/ansible/roles/deploy/files/artifact.tar.gz
+            # Change directory to ansible folder
+            cd .circleci/ansible
+            # Export backend ip to environment variable to use in inventory file
+            echo "Contents of the inventory.txt file is ------$(cat inventory.txt)"
+            # Run ansible playbook to deploy backend
+            ansible-playbook -i inventory.txt deploy-backend.yml            
       # Here's where you will add some code to rollback on failure  
+      # Destroy infrastructure if job fails to prevent unnecessary costs
+      - destroy-environment:
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+      # Revert migrations if job fails to prevent unnecessary costs    
+      - revert-migrations:
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
 
   smoke-test:
     docker:
