@@ -187,22 +187,49 @@ jobs:
 
   run-migrations:
     docker:
-      # Docker image here that supports NodeJS
+      # Use node image to run migrations and send results to kvdb
+      - image: circleci/node:13.8.0 
     steps:
-      # Checkout code from git
+      # Checkout code from github
+      - checkout
+      - run:
+          name: Install dependencies
+          command: |
+            # Install dependencies by using apt package manager to install tar, gzip and curl
+            sudo apt install -y tar gzip curl
+            # Install aws cli
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            # Unzip aws cli
+            unzip -qq awscliv2.zip
+            # Install aws cli with sudo
+            sudo ./aws/install
+      # Attach workspace to use backend folder from previous job
+      - restore_cache:
+          keys: [backend-build]
+      # Attach workspace to use inventory file from previous job    
+      - attach_workspace:
+          at: ~/
       - run:
           name: Run migrations
           command: |
-            # Your code here
-            exit 1
+            # Change directory to backend folder
+            cd backend
+            # Run migrations and save results to migrations.txt
+            npm run migrations >> migrations.txt
       - run:
-          name: Send migration results to memstash
+          name: Send migration results to kvdb
           command: |
-            # Your code here
-            exit 1
-     # Here's where you will add some code to rollback on failure      
+            # Check if migrations were successful and send results to kvdb
+            if grep -q "success" ~/project/backend/migrations.txt
+            then
+              # Send 1 to kvdb if migrations were successful to trigger next job
+              curl --insecure https://kvdb.io/GDXbD1Lre6YQ6KE3EyVjgd/migration_${CIRCLE_WORKFLOW_ID:0:7} -d '1'
+            fi
+      # Destroy infrastructure if job fails to prevent unnecessary costs      
+      - destroy-environment:
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}    
 
-    deploy-frontend:
+  deploy-frontend:
     docker:
       # Docker image here that supports AWS CLI
       - image: python:3.7-alpine3.16
