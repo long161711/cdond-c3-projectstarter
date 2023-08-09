@@ -236,9 +236,9 @@ jobs:
 
   cloudfront-update:
     docker:
-      # Docker image here that supports AWS CLI
+      - image: circleci/node:13.8.0
     steps:
-      # Checkout code from git
+      - checkout
       - run:
           name: Install dependencies
           command: |
@@ -265,8 +265,14 @@ jobs:
             --tags project=udapeople
             # Export cloudfront url to environment variable to use in frontend .env file
             echo OldWorkflowID: ${OldWorkflowID}
-            echo Current Workflow id: ${CIRCLE_WORKFLOW_ID:0:7}  
-      # Here's where you will add some code to rollback on failure  
+            echo Current Workflow id: ${CIRCLE_WORKFLOW_ID:0:7}            
+      # Here's where you will add some code to rollback on failure
+      # Destroy infrastructure if job fails to prevent unnecessary costs
+      - destroy-environment:
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+      # Revert migrations if job fails to prevent unnecessary costs    
+      - revert-migrations:
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
 
 cleanup:
     docker:
