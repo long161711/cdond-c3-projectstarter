@@ -73,35 +73,84 @@ jobs:
 
   test-frontend:
     docker:
-      # Docker image here
+      - image: circleci/node:13.8.0
     steps:
       # Checkout code from git
-      # Restore from cache
-      # Your job code here
+      - checkout
+      # Restore from cache if exists 
+      - restore_cache: # Restore from cache
+          keys: [frontend-build]
+      - run:
+          name: Test front-end
+          command: |
+            # change directory to frontend
+            cd frontend
+            # install dependencies in package.json
+            npm install
+            # build project to run tests
+            npm run test
                 
   test-backend:
     docker:
-      # Docker image here
+      - image: circleci/node:13.8.0
     steps:
-      # Checkout code from git
-      # Restore from cache
-      # Your job code here
+      # Checkout code from github
+      - checkout 
+      # Restore from cache if exists
+      - restore_cache: 
+          keys: [backend-build]
+      - run:
+          name: Test back-end
+          command: |
+            # change directory to backend
+            cd backend
+            # install dependencies in package.json
+            npm install
+            # build project to run tests
+            npm run test
             
   scan-frontend:
     docker:
-      # Docker image here
+      - image: circleci/node:13.8.0
     steps:
-      # Checkout code from git
-      # Restore from cache
-      # Your job code here
+      # Checkout code from github
+      - checkout
+      # Restore from cache if exists
+      - restore_cache:
+          keys: [frontend-build]
+      - run:
+          name: Scan front-end
+          command: |
+            # change directory to frontend
+            cd frontend
+            # install dependencies in package.json
+            npm install
+            # fix vulnerabilities and audit for critical vulnerabilities
+            npm audit fix --audit-level=critical --force
+            npm audit fix --force
+            npm audit --audit-level=critical
 
   scan-backend:
     docker:
-      # Docker image here
+      - image: circleci/node:13.8.0
     steps:
-      # Checkout code from git
-      # Restore from cache
-      # Your job code here
+      # Checkout code from github
+      - checkout
+      # Restore from cache if exists
+      - restore_cache:
+          keys: [backend-build]
+      - run:
+          name: Scan back-end
+          command: |
+            # change directory to backend
+            cd backend
+            # install dependencies in package.json
+            npm install
+            # fix vulnerabilities and audit for critical vulnerabilities
+            npm audit fix --audit-level=critical --force
+            # audit for critical vulnerabilities
+            npm audit fix --force
+            npm audit --audit-level=critical
 
   deploy-infrastructure:
     docker:
