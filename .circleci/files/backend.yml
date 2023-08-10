@@ -30,7 +30,7 @@ Resources:
       InstanceType: t2.micro
       SecurityGroups:
         - Ref: InstanceSecurityGroup
-      KeyName: aaaa
+      KeyName:Value
       ImageId: aaaaa
       Tags:
         - Key: Name
