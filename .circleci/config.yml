@@ -48,7 +48,11 @@ jobs:
       - run:
           name: Build front-end
           command: |
-            # change directory backend
+            # Remove node_modules directory
+            rm -rf node_modules
+            # Clear npm cache
+            npm cache clean --force
+            # change directory front-end
             cd frontend
             # install dependencies in packege.json
             npm install
@@ -69,6 +73,11 @@ jobs:
       - run:
           name: Back-end build
           command: |
+            # Remove node_modules directory
+            rm -rf node_modules
+
+            # Clear npm cache
+            npm cache clean --force
             cd backend
             npm install
             npm run build
