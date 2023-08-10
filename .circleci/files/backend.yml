@@ -30,8 +30,8 @@ Resources:
       InstanceType: t2.micro
       SecurityGroups:
         - Ref: InstanceSecurityGroup
-      KeyName:Value
-      ImageId: aaaaa
+      KeyName: adacity 
+      ImageId: ami-068#892
       Tags:
         - Key: Name
           Value: !Sub backend-${ID}
