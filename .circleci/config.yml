@@ -204,7 +204,7 @@ jobs:
       # Add ssh key to known hosts by using key fingerprint when uploading the key to circleci
       - add_ssh_keys:
           fingerprints:
-            - '11:d0:4c:1c:25:ef:3c:3d:d6:bb:55:c3:62:dd:27:2d'
+            - '4e:79:26:bc:06:f8:03:15:eb:da:d0:15:c8:25:68:4f'
       - run:
           name: Install dependencies
           command: |
@@ -244,7 +244,6 @@ jobs:
 
   run-migrations:
     docker:
-      # Use node image to run migrations and send results to kvdb
       - image: circleci/node:13.8.0 
     steps:
       # Checkout code from github
@@ -260,10 +259,8 @@ jobs:
             unzip -qq awscliv2.zip
             # Install aws cli with sudo
             sudo ./aws/install
-      # Attach workspace to use backend folder from previous job
       - restore_cache:
           keys: [backend-build]
-      # Attach workspace to use inventory file from previous job    
       - attach_workspace:
           at: ~/
       - run:
@@ -344,7 +341,7 @@ jobs:
       # Add ssh keys with fingerprint
       - add_ssh_keys:
           fingerprints:
-            - '39:6b:4a:6a:44:95:78:ad:53:e4:9b:65:f5:d9:85:9d'
+            - '4e:79:26:bc:06:f8:03:15:eb:da:d0:15:c8:25:68:4f'
       - run:
           name: Install dependencies
           command: |
@@ -395,7 +392,7 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            # install dependencies by using apk package manager to install curl, aws cli, nodejs and npm
+            # install curl, aws cli, nodejs and npm
             apk add --update --no-cache curl nodejs npm aws-cli
       - run:
           name: Backend smoke test.
@@ -419,13 +416,10 @@ jobs:
             echo $URL
             # Check if frontend is up and running by calling frontend url and checking if it returns "Welcome"
             if curl ${URL} | grep "Welcome"; then return 0; else return 1; fi
-      # Here's where you will add some code to rollback on failure  
-      # Destroy infrastructure if job fails to prevent unnecessary costs
       - destroy-environment:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
-      # Revert migrations if job fails to prevent unnecessary costs    
       - revert-migrations:
-          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}  
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}      
 
   cloudfront-update:
     docker:
@@ -531,14 +525,14 @@ workflows:
               only: [master]
       - configure-infrastructure:
           requires: [deploy-infrastructure]
-      # - run-migrations:
-      #     requires: [configure-infrastructure]
-      # - deploy-frontend:
-      #     requires: [run-migrations]
-      # - deploy-backend:
-      #     requires: [run-migrations]
-      # - smoke-test:
-      #     requires: [deploy-backend, deploy-frontend]
+      - run-migrations:
+          requires: [configure-infrastructure]
+      - deploy-frontend:
+          requires: [run-migrations]
+      - deploy-backend:
+          requires: [run-migrations]
+      - smoke-test:
+          requires: [deploy-backend, deploy-frontend]
       # - cloudfront-update:
       #     requires: [smoke-test]
       # I commented out the cleanup job because it will delete the infrastructure when I run the workflow and Reviewer cant review my work (website)
