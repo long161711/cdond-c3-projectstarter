@@ -1,5 +1,6 @@
 version: 2.1
 
+
 parameters:
   workflow_id:
     type: string
@@ -42,23 +43,21 @@ jobs:
     docker:
       - image: circleci/node:13.8.0
     steps:
+      # checkout source code from github
       - checkout
+      # restore from cache if exists
       - restore_cache:
           keys: [frontend-build]
       - run:
           name: Build front-end
           command: |
-            # Remove node_modules directory
-            rm -rf node_modules
-            # Clear npm cache
-            npm cache clean --force
-            # change directory front-end
-            cd frontend
-            # install dependencies in packege.json
+            # change directory to frontend
+            cd frontend 
+            # install dependencies in package.json
             npm install
-            # build
+            # build the project
             npm run build
-      # save results to cache
+      # Save results to cache      
       - save_cache:
           paths: [frontend/node_modules]
           key: frontend-build
@@ -67,20 +66,21 @@ jobs:
     docker:
       - image: circleci/node:13.8.0
     steps:
+      # checkout source code from github
       - checkout
+      # restore from cache if exists
       - restore_cache:
           keys: [backend-build]
       - run:
           name: Back-end build
           command: |
-            # Remove node_modules directory
-            rm -rf node_modules
-
-            # Clear npm cache
-            npm cache clean --force
+            # change directory to backend
             cd backend
+            # install dependencies in package.json
             npm install
+            # build the project
             npm run build
+      # Save results to cache      
       - save_cache:
           paths: [backend/node_modules]
           key: backend-build
@@ -103,7 +103,7 @@ jobs:
             npm install
             # build project to run tests
             npm run test
-                
+
   test-backend:
     docker:
       - image: circleci/node:13.8.0
@@ -139,7 +139,7 @@ jobs:
             cd frontend
             # install dependencies in package.json
             npm install
-            # fix SCREENSHOT03
+            # fix vulnerabilities and audit for critical vulnerabilities
             npm audit fix --audit-level=critical --force
             npm audit fix --force
             npm audit --audit-level=critical
@@ -160,8 +160,9 @@ jobs:
             cd backend
             # install dependencies in package.json
             npm install
-            # fix SCREENSHOT03
+            # fix vulnerabilities and audit for critical vulnerabilities
             npm audit fix --audit-level=critical --force
+            # audit for critical vulnerabilities
             npm audit fix --force
             npm audit --audit-level=critical
 
@@ -176,7 +177,7 @@ jobs:
       - run:
           name: Ensure back-end infrastructure exists
           command: |
-            # deploy backend cloudformation stack by file backend.yml
+            # deploy backend cloudformation stack by cloudformation template file backend.yml
             aws cloudformation deploy \
               --template-file .circleci/files/backend.yml \
               --tags project=udapeople \
@@ -185,7 +186,7 @@ jobs:
       - run:
           name: Ensure front-end infrastructure exist
           command: |
-            # deploy frontend cloudformation stack by file frontend.yml
+            # deploy frontend cloudformation stack by cloudformation template file frontend.yml
             aws cloudformation deploy \
               --template-file .circleci/files/frontend.yml \
               --tags project=udapeople \
@@ -218,7 +219,7 @@ jobs:
       # Add ssh key to known hosts by using key fingerprint when uploading the key to circleci
       - add_ssh_keys:
           fingerprints:
-            - '4e:79:26:bc:06:f8:03:15:eb:da:d0:15:c8:25:68:4f'
+            - '11:d0:4c:1c:25:ef:3c:3d:d6:bb:55:c3:62:dd:27:2d'
       - run:
           name: Install dependencies
           command: |
@@ -258,6 +259,7 @@ jobs:
 
   run-migrations:
     docker:
+      # Use node image to run migrations and send results to kvdb
       - image: circleci/node:13.8.0 
     steps:
       # Checkout code from github
@@ -273,8 +275,10 @@ jobs:
             unzip -qq awscliv2.zip
             # Install aws cli with sudo
             sudo ./aws/install
+      # Attach workspace to use backend folder from previous job
       - restore_cache:
           keys: [backend-build]
+      # Attach workspace to use inventory file from previous job    
       - attach_workspace:
           at: ~/
       - run:
@@ -355,7 +359,7 @@ jobs:
       # Add ssh keys with fingerprint
       - add_ssh_keys:
           fingerprints:
-            - '4e:79:26:bc:06:f8:03:15:eb:da:d0:15:c8:25:68:4f'
+            - '11:d0:4c:1c:25:ef:3c:3d:d6:bb:55:c3:62:dd:27:2d'
       - run:
           name: Install dependencies
           command: |
@@ -406,7 +410,7 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            # install curl, aws cli, nodejs and npm
+            # install dependencies by using apk package manager to install curl, aws cli, nodejs and npm
             apk add --update --no-cache curl nodejs npm aws-cli
       - run:
           name: Backend smoke test.
@@ -420,7 +424,7 @@ jobs:
             export API_URL="http://${BACKEND_IP}:3030"
             # print the API_URL env var to the console
             echo $API_URL
-            # Check if backend is up and running by calling /api/status endpoint and checking if it -> "ok"
+            # Check if backend is up and running by calling /api/status endpoint and checking if it returns "ok"
             if curl --connect-timeout 5 "${API_URL}/api/status" | grep "ok"; then return 0; else return 0; fi
       - run:
           name: Frontend smoke test.
@@ -428,10 +432,13 @@ jobs:
             # Export frontend url to environment variable to use in frontend .env file
             export URL="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website-${AWS_DEFAULT_REGION}.amazonaws.com/#/employees"            
             echo $URL
-            # Check if frontend is up and running by calling frontend url and checking if it -> "Welcome"
+            # Check if frontend is up and running by calling frontend url and checking if it returns "Welcome"
             if curl ${URL} | grep "Welcome"; then return 0; else return 1; fi
+      # Here's where you will add some code to rollback on failure  
+      # Destroy infrastructure if job fails to prevent unnecessary costs
       - destroy-environment:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+      # Revert migrations if job fails to prevent unnecessary costs    
       - revert-migrations:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}      
 
@@ -516,7 +523,6 @@ jobs:
               else
                 echo '-------------------CANNOT CLEAN UP --------------------------'
               fi
-            
 
 workflows:
   default:
@@ -533,7 +539,7 @@ workflows:
           requires: [build-frontend]
       - deploy-infrastructure:
           requires: [test-frontend, test-backend, scan-frontend, scan-backend]
-          # This job will only run on master
+          # This job will only run on master branch
           filters:
             branches:
               only: [master]
@@ -551,5 +557,5 @@ workflows:
           requires: [smoke-test]
       # I commented out the cleanup job because it will delete the infrastructure when I run the workflow and Reviewer cant review my work (website)
       # But If I uncomment it, it will delete the infrastructure after the workflow is done.It runs normally.        
-      - cleanup:
-          requires: [cloudfront-update]
+      # - cleanup:
+      #     requires: [cloudfront-update]
