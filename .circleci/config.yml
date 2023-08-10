@@ -121,9 +121,13 @@ jobs:
       - run:
           name: Scan front-end
           command: |
+            # change directory to frontend
             cd frontend
+            # install dependencies in package.json
             npm install
-            ## npm install oauth-sign@^0.9.0
+            # fix SCREENSHOT03
+            npm audit fix --audit-level=critical --force
+            npm audit fix --force
             npm audit --audit-level=critical
 
   scan-backend:
@@ -140,7 +144,11 @@ jobs:
           command: |
             # change directory to backend
             cd backend
+            # install dependencies in package.json
             npm install
+            # fix SCREENSHOT03
+            npm audit fix --audit-level=critical --force
+            npm audit fix --force
             npm audit --audit-level=critical
 
   deploy-infrastructure:
@@ -154,7 +162,7 @@ jobs:
       - run:
           name: Ensure back-end infrastructure exists
           command: |
-            # deploy backend cloudformation stack by cloudformation template file backend.yml
+            # deploy backend cloudformation stack by file backend.yml
             aws cloudformation deploy \
               --template-file .circleci/files/backend.yml \
               --tags project=udapeople \
@@ -163,7 +171,7 @@ jobs:
       - run:
           name: Ensure front-end infrastructure exist
           command: |
-            # deploy frontend cloudformation stack by cloudformation template file frontend.yml
+            # deploy frontend cloudformation stack by file frontend.yml
             aws cloudformation deploy \
               --template-file .circleci/files/frontend.yml \
               --tags project=udapeople \
@@ -189,50 +197,22 @@ jobs:
   configure-infrastructure:
     docker:
       # Docker image here that supports Ansible latest version
-      - image: python:3.7-alpine3.16
     steps:
-      # Checkout code from github
-      - checkout
-      # Add ssh key to known hosts by using key fingerprint when uploading the key to circleci
-      - add_ssh_keys:
-          fingerprints:
-            - '11:d0:4c:1c:25:ef:3c:3d:d6:bb:55:c3:62:dd:27:2d'
+      # Checkout code from git
+      # Add ssh keys with fingerprint
+      # attach workspace
       - run:
           name: Install dependencies
           command: |
-            # install dependencies by using apk package manager to install tar, gzip, ansible and aws cli
-            apk add --update --no-cache ansible gzip aws-cli tar  
+            # Your code here
+            exit 1
       # Attach workspace to use inventory file from previous job
-      - attach_workspace:
-          at: ~/
       - run:
           name: Configure server
           command: |
-            # Add all enviroment variables to .env file from environment variables in circleci we implemented in the beginning of the file
-            echo ENVIRONMENT=production > backend/.env
-            echo TYPEORM_CONNECTION=$TYPEORM_CONNECTION >> backend/.env
-            echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> backend/.env
-            echo TYPEORM_ENTITIES=$TYPEORM_ENTITIES >> backend/.env
-            echo TYPEORM_HOST=$TYPEORM_HOST >> backend/.env
-            echo TYPEORM_MIGRATIONS=$TYPEORM_MIGRATIONS >> backend/.env
-            echo TYPEORM_MIGRATIONS_DIR=$TYPEORM_MIGRATIONS_DIR >> backend/.env
-            echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> backend/.env
-            echo TYPEORM_PORT=$TYPEORM_PORT >> backend/.env
-            echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> backend/.env
-            # Cat .env file to check if it's correct
-            cat backend/.env
-            # Change directory to ansible folder
-            cd .circleci/ansible
-            # Run ansible playbook to configure server with the correct environment variables and install dependencies
-            ansible-playbook -i inventory.txt configure-server.yml
-      # Persist workspace to use in next job      
-      - persist_to_workspace:
-          root: ~/
-          paths:
-            - project/backend            
-      # Destroy infrastructure if job fails to prevent unnecessary costs
-      - destroy-environment:
-          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+            # Your code here
+            exit 1
+      # Here's where you will add some code to rollback on failure      
 
   run-migrations:
     docker:
@@ -515,13 +495,13 @@ workflows:
           requires: [build-backend]
       - scan-frontend:
           requires: [build-frontend]
-      # - deploy-infrastructure:
-      #     requires: [test-frontend, test-backend, scan-frontend, scan-backend]
-      #     filters:
-      #       branches:
-      #         only: [test-feature-branch]
-      # - configure-infrastructure:
-      #     requires: [deploy-infrastructure]
+      - deploy-infrastructure:
+          requires: [test-frontend, test-backend, scan-frontend, scan-backend]
+          filters:
+            branches:
+              only: [test-feature-branch]
+      - configure-infrastructure:
+          requires: [deploy-infrastructure]
       # - run-migrations:
       #     requires: [configure-infrastructure]
       # - deploy-frontend:
