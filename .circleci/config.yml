@@ -516,9 +516,9 @@ jobs:
               if [[ "${CIRCLE_WORKFLOW_ID:0:7}" =~ "${OldWorkflowID}" ]]
               then
                 echo '--------------DELETE All CLOUDFORMATION---------------'
-                aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
-                aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}"
-                aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID}"
+                # aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
+                # aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}"
+                # aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID}"
                 echo '-------------------DELETE COMPLETE----------------------'
               else
                 echo '-------------------CANNOT CLEAN UP --------------------------'
@@ -584,5 +584,5 @@ workflows:
           requires: [smoke-test]
       # I commented out the cleanup job because it will delete the infrastructure when I run the workflow and Reviewer cant review my work (website)
       # But If I uncomment it, it will delete the infrastructure after the workflow is done.It runs normally.
-      # - cleanup:
-      #     requires: [cloudfront-update, add-prometheus-node-exporter]
+      - cleanup:
+          requires: [cloudfront-update, add-prometheus-node-exporter]
