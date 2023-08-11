@@ -10,28 +10,25 @@ Parameters:
     Type: String
     Default: vpc-08e5ace968f22cfd6
   Subnet:
-    Description: This subnet must already exist
+    Description: Deploy the instance in this Subnet
     Type: String
-    Default: subnet-0ea95cbe7ebf8fae5
+    Default: subnet-0ec3afdc84c9bbdff
   AZ:
     Description: Choose an AZ that corresponds to the Subnet in the !Subnet section
     Type: String
-    Default: us-east-1a
+    Default: us-east-1b
   KeyPair:
     Description: |
       Set a keypair you will use to connect to the instance
       You can generate a keypair from CLI by running
-      `aws ec2 create-key-pair --key-name udacity >> udacity.pem`
-      where udacity is the name of the KeyPair
-      Read more here: https://docs.aws.amazon.com/cli/latest/reference/ec2/create-key-pair.html#examples
     Type: String
     Default: udacity
   Image:
     Description: |
-      The ID of the AMI (e.g. ami-0ee8244746ec5d6d4 for Ubuntu 20 deployed in us-west-2 )
-      ami-0cfa91bdbc3be780c for Ubuntu 18 in us-east-1a
+      The ID of the AMI
+      ami-0261755bbcb8c4a84 for ubuntu Server 20.04 LTS (HVM), SSD in us-west-2
     Type: String
-    Default: ami-068663a3c619dd892 # ami-0ee8244746ec5d6d4
+    Default: ami-0261755bbcb8c4a84
   LocalIPAddress:
     Description: This is your local IP address, it will be used to configure security group ingress
     Type: String
