@@ -516,38 +516,13 @@ jobs:
               if [[ "${CIRCLE_WORKFLOW_ID:0:7}" =~ "${OldWorkflowID}" ]]
               then
                 echo '--------------DELETE All CLOUDFORMATION---------------'
-                # aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
-                # aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}"
-                # aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID}"
+                aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
+                aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}"
+                aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID}"
                 echo '-------------------DELETE COMPLETE----------------------'
               else
                 echo '-------------------CANNOT CLEAN UP --------------------------'
               fi
-
-  add-prometheus-node-exporter:
-    docker:
-      - image: python:3.7-alpine3.16
-    steps:
-      - checkout
-      - add_ssh_keys:
-          fingerprints:
-            - '4e:79:26:bc:06:f8:03:15:eb:da:d0:15:c8:25:68:4f'
-      - run:
-          name: Install dependencies
-          command: |
-            apk add --update aws-cli tar gzip ansible nodejs npm
-      - attach_workspace:
-          at: ~/
-      - run:
-          name: Setup Prometheus Node Exporter
-          command: |
-            cd .circleci/ansible
-            cat inventory.txt
-            ansible-playbook -i inventory.txt node-exporter.yml
-      - destroy-environment:
-          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
-      - revert-migrations:
-          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
 
 workflows:
   default:
@@ -568,10 +543,8 @@ workflows:
           filters:
             branches:
               only: [master]
-      - add-prometheus-node-exporter:
-          requires: [deploy-infrastructure]
       - configure-infrastructure:
-          requires: [add-prometheus-node-exporter]
+          requires: [deploy-infrastructure]
       - run-migrations:
           requires: [configure-infrastructure]
       - deploy-frontend:
@@ -585,4 +558,4 @@ workflows:
       # I commented out the cleanup job because it will delete the infrastructure when I run the workflow and Reviewer cant review my work (website)
       # But If I uncomment it, it will delete the infrastructure after the workflow is done.It runs normally.
       # - cleanup:
-      #     requires: [cloudfront-update, add-prometheus-node-exporter]
+      #     requires: [cloudfront-update]
