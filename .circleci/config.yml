@@ -219,7 +219,7 @@ jobs:
       # Add ssh key to known hosts by using key fingerprint when uploading the key to circleci
       - add_ssh_keys:
           fingerprints:
-            - '4e:79:26:bc:06:f8:03:15:eb:da:d0:15:c8:25:68:4f'
+            - '98:52:e8:6a:ca:ee:a2:87:e0:d0:3d:cf:36:33:d8:72'
       - run:
           name: Install dependencies
           command: |
@@ -359,7 +359,7 @@ jobs:
       # Add ssh keys with fingerprint
       - add_ssh_keys:
           fingerprints:
-            - '4e:79:26:bc:06:f8:03:15:eb:da:d0:15:c8:25:68:4f'
+            - '98:52:e8:6a:ca:ee:a2:87:e0:d0:3d:cf:36:33:d8:72'
       - run:
           name: Install dependencies
           command: |
