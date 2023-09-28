@@ -356,7 +356,7 @@ jobs:
     steps:
       # Checkout code from git
       - checkout
-      # Add ssh keys with fingerprint
+      # Add ssh keys with fingerprint LongNT2
       - add_ssh_keys:
           fingerprints:
             - '96:34:06:9e:ab:42:fb:32:e2:d1:fa:d0:00:c0:3a:52'
