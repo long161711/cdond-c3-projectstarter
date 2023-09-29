@@ -392,20 +392,15 @@ jobs:
             echo "Contents of the inventory.txt file is ------$(cat inventory.txt)"
             # Run ansible playbook to deploy backend
             ansible-playbook -i inventory.txt deploy-backend.yml            
-      # Here's where you will add some code to rollback on failure  
-      # Destroy infrastructure if job fails to prevent unnecessary costs
       - destroy-environment:
-          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
-      # Revert migrations if job fails to prevent unnecessary costs    
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}   
       - revert-migrations:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
 
   smoke-test:
     docker:
-      # Use Docker image that supports curl and aws cli
       - image: python:3.7-alpine3.16 
     steps:
-      # Checkout code from git
       - checkout
       - run:
           name: Install dependencies
